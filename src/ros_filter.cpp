@@ -71,6 +71,8 @@ namespace RobotLocalization
       enabled_(false),
       toggledOn_(true)
   {
+    zeroCoordZ_ = false; // Extended
+    
     stateVariableNames_.push_back("X");
     stateVariableNames_.push_back("Y");
     stateVariableNames_.push_back("Z");
@@ -309,6 +311,21 @@ namespace RobotLocalization
     updateVector[StateMemberVz] = 1;
     updateVector[StateMemberVroll] = 1;
     updateVector[StateMemberVpitch] = 1;
+    updateVector[StateMemberAz] = 1;
+  }
+
+  template<typename T>
+  void RosFilter<T>::zeroCoordZ(Eigen::VectorXd &measurement,
+                               Eigen::MatrixXd &measurementCovariance,
+                               std::vector<int> &updateVector)
+  {
+    measurement(StateMemberZ) = 0.0;
+    measurement(StateMemberAz) = 0.0;
+
+    measurementCovariance(StateMemberZ, StateMemberZ) = 1e-6;
+    measurementCovariance(StateMemberAz, StateMemberAz) = 1e-6;
+
+    updateVector[StateMemberZ] = 1;
     updateVector[StateMemberAz] = 1;
   }
 
@@ -783,6 +800,9 @@ namespace RobotLocalization
     // Determine if we're in 2D mode
     nhLocal_.param("two_d_mode", twoDMode_, false);
 
+    // Determine if coordination Z should be set to 0
+    nhLocal_.param("zero_coord_z", zeroCoordZ_, false); // Extended
+
     // Smoothing window size
     nhLocal_.param("smooth_lagged_data", smoothLaggedData_, false);
     nhLocal_.param("history_length", historyLength_, 0.0);
@@ -932,7 +952,8 @@ namespace RobotLocalization
              "\ntransform_timeout is " << tfTimeout_.toSec() <<
              "\nfrequency is " << frequency_ <<
              "\nsensor_timeout is " << filter_.getSensorTimeout() <<
-             "\ntwo_d_mode is " << (twoDMode_ ? "true" : "false") <<
+             "\ntwo_d_mode is " << (twoDMode_ ? "true" : "false") << // Extened
+             "\nzero_coord_z is " << (zeroCoordZ_ ? "true" : "false") <<
              "\nsmooth_lagged_data is " << (smoothLaggedData_ ? "true" : "false") <<
              "\nhistory_length is " << historyLength_ <<
              "\nuse_control is " << (useControl_ ? "true" : "false") <<
@@ -2502,6 +2523,12 @@ namespace RobotLocalization
       if (twoDMode_)
       {
         forceTwoD(measurement, measurementCovariance, updateVector);
+      }
+
+      // Extra. Set coordination Z to 0
+      if(zeroCoordZ_)
+      {
+        zeroCoordZ(measurement, measurementCovariance, updateVector);
       }
     }
     else

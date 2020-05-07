@@ -178,6 +178,19 @@ template<class T> class RosFilter
                    Eigen::MatrixXd &measurementCovariance,
                    std::vector<int> &updateVector);
 
+    //! @brief Method for zeroing out only coordination Z within measurements
+    //! @param[out] measurement = The measurement whose coordination Z will be zeroed out
+    //! @param[out] measurementCovariance - The covariance of the measurement
+    //! @param[out] updateVector - The boolean upate vector of the mearsurement
+    //!
+    //! Extended interface for user compared with prototype robot_localization
+    //! It sets the coordination Z to 0, gives it tiny variances, and sets
+    //! their updateVector values to 1.
+    //!
+    void zeroCoordZ(Eigen::VectorXd &measurement,
+                    Eigen::MatrixXd &measurementCovariance,
+                    std::vector<int> &updateVector);
+
     //! @brief Retrieves the EKF's output for broadcasting
     //! @param[out] message - The standard ROS odometry message to be filled
     //! @return true if the filter is initialized, false otherwise
@@ -621,6 +634,14 @@ template<class T> class RosFilter
     //! every measurement.
     //!
     bool twoDMode_;
+
+    //! @brief Whether or not set coordination Z to 0
+    //!
+    //! If this is true, the filter binds all coordination Z and its velocityto 0 for
+    //! every measurement.
+    //! Extended interface for user compared with prototype robot_localization
+    //!
+    bool zeroCoordZ_;
 
     //! @brief Whether or not we use a control term
     //!
